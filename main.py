@@ -2,7 +2,11 @@ import requests as req
 import streamlit as st
 import  datetime as dt
 import pandas as pd
-
+def find_category(cat_list1,cat_list2):
+    for c in cat_list1:
+        if c in cat_list2:
+            return c
+    return None
 def make_table_of_weather():
     #columns = ["city", "datetime", "temp", "humidity", "wind", "precipitation"]
     #weather_df = pd.DataFrame(columns=columns)
@@ -70,12 +74,6 @@ def make_data_set_for_features():
                     raw.get("name") or
                     raw.get("brand")
             )
-            phone=(
-                    properties.get("phone") or
-                    properties.get("contact", {}).get("phone") or
-                 raw.get("phone") or
-                   raw.get("contact:phone")
-            )
             address=f"{properties.get("street",'')} , {properties.get("housenumber",'')}"
             if not address:
                 address=f"{properties.get('address_line1',"")} "
@@ -84,7 +82,6 @@ def make_data_set_for_features():
                 "name":name,
                 "address":address,
                 "city":city,
-                #"phone":phone,
                  "link":properties.get("website"),
                 "distance":properties.get("distance"),
                  "category":properties.get("categories",[]),
@@ -95,15 +92,14 @@ def make_data_set_for_features():
         df=df[df.name.notnull()]
         df=df[df.address.notnull()]
         temp_conditions=['Very Hot','Hot','Pleasant','Cold','Very Cold']
-        category_dict= {'Ski':[4],
-                        'Sport':[1,2,3],
-                        'Shopping Mall':[0,1,2,3,4],
-                        'Entertainment':[0,1,2,3,4],
-                        'Restaurant':[0,1,2,3,4],
-                        'parks':[1,2],
-                         'activity':[1,2],}
-        all_options = list(category_dict.keys())
-        user_selection = st.multiselect("🎯 Choose categories you'd like to explore:", all_options)
+        categories={'activity':[1,2],
+                       'commercial.shopping_mall':[0,1,2,3,4],
+                       'catering.restaurant':[0,1,2,3,4],
+                       'entertainment':[0,1,2,3,4],
+                       'sport':[1,2,3],
+                       'ski':[4],
+                       'activity.hiking':[1,2],
+                       "entertainment.theme_park":[1,2,3]}
         current_condition=None
         if currnt_temp >=32:
             current_condition='Very Hot'
@@ -116,8 +112,15 @@ def make_data_set_for_features():
         elif currnt_temp and currnt_temp <10:
             current_condition='Very Cold'
         condition_index = temp_conditions.index(current_condition)
-        st.dataframe(df)
-
+        st.write("today is",current_condition,"and we made a list suitable to your weather:")
+        list_category=list(categories.keys())
+        df["category"]=df["category"].apply( lambda row_cats:find_category(row_cats,list_category))
+        mask = df["category"].apply(lambda c: condition_index in categories.get(c, []))
+        df=df[mask]
+        all_options = list(categories.keys())
+        user_selection = st.multiselect("🎯 Choose categories you'd like to explore:", all_options,default=all_options)
+        filtered = df[df["category"].isin(user_selection)]
+        st.dataframe(filtered, use_container_width=True)
 lat=None
 lon=None
 currnt_temp=None
