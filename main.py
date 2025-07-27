@@ -2,32 +2,9 @@ import requests as req
 import streamlit as st
 import  datetime as dt
 import pandas as pd
+import urllib.parse
 
 
-st.title("🌍 Personalized Weather")
-res = req.get("https://ipinfo.io/json", headers={"User-Agent": "my-app"})
-data = res.json()
-lat, lon = map(float, data["loc"].split(","))
-city = data.get("city", "Unknown")
-region = data.get("region", "Unknown")
-country = data.get("country", "Unknown")
-weather_url = (
-    f"https://api.open-meteo.com/v1/forecast"
-    f"?latitude={lat}&longitude={lon}"
-    "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weathercode"
-    "&timezone=auto"
-)
-weather_res = req.get(weather_url, verify=False)
-weather_data = weather_res.json()
-current = weather_data["current"]
-st.subheader(f"📍 Location: {city}, {region}, {country}")
-st.markdown("---")
-col1, col2, col3 = st.columns(3)
-col1.metric("🌡️ Temp", f"{current['temperature_2m']}°C")
-col2.metric("💧 Humidity", f"{current['relative_humidity_2m']}%")
-col3.metric("🌬️ Wind", f"{current['wind_speed_10m']} km/h")
-st.caption(f"Weather Code: {current['weathercode']}")
-#הערה להוסיף תנאים במקרה והמידע לא הגיע שלא יוצג בקובץ הסופי השגיאות
 def make_table_of_weather():
     locations = {
         "tel_aviv": [32.109333, 34.855499],
@@ -94,5 +71,43 @@ def make_data_set_for_features():
     df = pd.DataFrame(data)
     st.dataframe(df)
 
-make_data_set_for_features()
+lat=None
+lon=None
+with st.form("location_form"):
+    st.subheader("📍 write your location")
+    city = st.text_input("city")
+    street = st.text_input("street")
+    country = st.text_input("state", value="ישראל")
+    submitted = st.form_submit_button("check weather")
+    if submitted:
+        full_address = f"{street}, {city}, {country}" if street else f"{city}, {country}"
+        #full_address=urllib.parse.quote(full_address)
+        loc_url = (
+            f"https://api.geoapify.com/v1/geocode/search"
+            f"?text={full_address}&lang=he&format=json&apiKey=2d6acf0f3338413992829d14fa69ffdf"
+        )
+        res = req.get(loc_url,verify=False)
+        res.raise_for_status()
+        loc_data = res.json()
+        if loc_data["results"]:
+            lat = loc_data["results"][0]["lat"]
+            lon = loc_data["results"][0]["lon"]
+            weather_url = (
+        f"https://api.open-meteo.com/v1/forecast"
+        f"?latitude={lat}&longitude={lon}"
+        "&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weathercode"
+        "&timezone=auto"
+            )
+            weather_res = req.get(weather_url, verify=False)
+            weather_data = weather_res.json()
+            current = weather_data["current"]
+            st.markdown(f"**📌 address:** {full_address}")
+            st.markdown("---")
+            col1, col2, col3 = st.columns(3)
+            col1.metric("🌡️ Temp", f"{current['temperature_2m']}°C")
+            col2.metric("💧 Humidity", f"{current['relative_humidity_2m']}%")
+            col3.metric("🌬️ Wind", f"{current['wind_speed_10m']} km/h")
+            st.caption(f"Weather Code: {current['weathercode']}")
+            if lat and lon:
+                make_data_set_for_features()
 make_table_of_weather()
