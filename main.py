@@ -116,7 +116,6 @@ def make_data_set_for_features():
         elif currnt_temp and currnt_temp <10:
             current_condition='Very Cold'
         condition_index = temp_conditions.index(current_condition)
-        df["category"].
         st.dataframe(df)
 
 lat=None
