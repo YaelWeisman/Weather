@@ -14,30 +14,26 @@ def find_category(cat_list1,cat_list2):
     return None
 
 def display_filtered_places(df):
-    if 'show_places' not in st.session_state:
-        st.session_state.show_places = False
-
-    toggle_label = "🔽 Hide recommended places" if st.session_state.show_places else "✨ Show places based on the weather"
-    if st.button(toggle_label):
-        st.session_state.show_places = not st.session_state.show_places
-
-    if st.session_state.show_places:
-        df = df[df["category"].notnull()]
-        df["category"] = df["category"].astype(str).str.strip().str.lower()
+    show_places = st.toggle("✨ הצג/הסתר מקומות לפי מזג אוויר", value=True, key="places_toggle")
+    if show_places:
         if df.empty:
-            st.warning("😕 No matching locations found.")
+            st.warning("😕 לא נמצאו מקומות תואמים.")
         else:
-            for _, row in df.iterrows():
-                text_dir = "rtl"
-                st.markdown(f"""
-                <div style='border:1px solid #ccc; border-radius:10px; padding:15px; margin:10px 0; background-color: #e6f7ff; direction:{text_dir}; text-align:{'right' if text_dir=='rtl' else 'left'};'>
-                    <h4 style='margin:0;'>📍 {row['name']}</h4>
-                    <p style='margin:0;'><strong>📌 Address:</strong> {row['address']} | {row['city']}</p>
-                    <p style='margin:0;'><strong>🔗 Distance:</strong> {int(row['distance'])} meters</p>
-                    <p style='margin:0;'><strong>🏷️ Category:</strong> {row['category']}</p>
-                    {f'<p style="margin:0;"><a href="{row["link"]}" target="_blank">🌐 Website</a></p>' if pd.notnull(row["link"]) else ''}
-                </div>
-                """, unsafe_allow_html=True)
+            with st.container():
+                for _, row in df.iterrows():
+                    st.markdown(f"""
+                    <div style='border:1px solid #ccc; border-radius:10px; padding:15px; margin:10px 0; background-color:#e6f7ff; direction:rtl; text-align:right;'>
+                        <h4 style='margin:0;'>📍 {row['name']}</h4>
+                        <p style='margin:0;'><strong>📌 כתובת:</strong> {row['address']} | {row['city']}</p>
+                        <p style='margin:0;'><strong>🔗 מרחק:</strong> {int(row['distance'])} מטרים</p>
+                        <p style='margin:0;'><strong>🏷️ קטגוריה:</strong> {row['category']}</p>
+                        {f'<p style="margin:0;"><a href="{row["link"]}" target="_blank">🌐 אתר</a></p>' if pd.notnull(row["link"]) else ''}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+
+
+
 
 def make_table_of_weather():
     end = dt.date.today() - dt.timedelta(days=1)
@@ -83,6 +79,7 @@ def make_table_of_weather():
             #st.dataframe(filter_df)
         df.index = pd.to_datetime(df.index).tz_localize("UTC").tz_convert("Asia/Jerusalem")
         df["hour"] = df.index.hour
+        col1, col2, col3 = st.columns(3)
         with col1:
             st.subheader("התפלגות טמפרטורה")
             fig = sns.displot(x='temp', data=df, kde=True, color="#FF7043", height=3, aspect=1)
@@ -217,6 +214,8 @@ def make_data_set_for_features():
 lat=None
 lon=None
 currnt_temp=None
+
+
 st.subheader("WeatherX ")
 with st.form("location_form"):
     st.subheader("📍 Write your location")
@@ -263,5 +262,5 @@ lon = st.session_state.get("lon")
 currnt_temp = st.session_state.get("currnt_temp")
 city = st.session_state.get("city")
 if all([lat, lon, currnt_temp]):
-    make_data_set_for_features()
     make_table_of_weather()
+    make_data_set_for_features()
