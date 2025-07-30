@@ -14,11 +14,11 @@ WeatherX is a web application that analyzes historical weather data, shows curre
 
 
  ##How it works:
-*The user inputs a **city + country**.
-*The app geocodes the location using **Geoapify**
-*It fetches weather data and processes it using **pandas**.
-*Charts are built using **Seaborn** and **Plotly**.
-*Based on current temp, it filters relevant places and displays them as cards.
+The user inputs a **city + country**__
+The app geocodes the location using **Geoapify**.__
+It fetches weather data and processes it using **pandas**.__
+Charts are built using **Seaborn** and **Plotly**.__
+Based on current temp, it filters relevant places and displays them as cards__
 
 
 ##Development Highlights:
