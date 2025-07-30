@@ -1,4 +1,3 @@
-from sys import flags
 
 import requests as req
 import streamlit as st
@@ -54,10 +53,24 @@ hr {
     margin-top: 20px;
     margin-bottom: 10px;
 }
+.input {
+        background-color: #E3F2FD !important;
+        border: 1px solid #42A5F5 !important;
+        color: #0D47A1 !important;
+        font-weight: bold;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div class='site-title'>WeatherX</div>", unsafe_allow_html=True)
+st.markdown("""
+<div class='site-title'>
+    WeatherX<br>
+    <span style='font-size:16px; font-weight:normal; color:#42A5F5;'>
+        Analyze weather history, check current conditions, and explore places around you
+    </span>
+</div>
+""", unsafe_allow_html=True)
+
 
 def find_category(cat_list1,cat_list2):
     for c in cat_list1:
@@ -69,19 +82,21 @@ def display_filtered_places(df):
     if df.empty:
         st.warning("😕 No matching places found.")
     else:
+        df.sort_values(by=['distance'], ascending=True, inplace=True)
+        df['distance']=df.distance.astype(float)/100
         for _, row in df.iterrows():
             st.markdown(f"""
                 <div style='border:1px solid #ccc; border-radius:10px; padding:15px; margin:10px 0; background-color:#e6f7ff;'>
                     <h4 style='margin:0;'>📍 {row['name']}</h4>
                     <p style='margin:0;'><strong>📌 Address:</strong> {row['address']} | {row['city']}</p>
-                    <p style='margin:0;'><strong>🔗 Distance:</strong> {int(row['distance'])} meters</p>
+                    <p style='margin:0;'><strong>🔗 Distance:</strong> {int(row['distance'])} km</p>
                     <p style='margin:0;'><strong>🏷️ Category:</strong> {row['category']}</p>
                     {f'<p style="margin:0;"><a href="{row["link"]}" target="_blank">🌐 Website</a></p>' if pd.notnull(row["link"]) else ''}
                 </div>
                 """, unsafe_allow_html=True)
 
 
-def make_table_of_weather(lon ,lat):
+def make_table_of_weather(lon ,lat,city):
     end = dt.date.today() - dt.timedelta(days=1)
     start = end - dt.timedelta(days=30)
     url = (
@@ -118,27 +133,31 @@ def make_table_of_weather(lon ,lat):
         df=df.set_index("datetime")
         df.index = pd.to_datetime(df.index).tz_localize("UTC").tz_convert("Asia/Jerusalem")
         df["hour"] = df.index.hour
+        st.markdown(f"""
+        <div class='section-title'>
+            Weather history in {city} – last 30 days
+        </div>
+        """, unsafe_allow_html=True)
         col1, col2, col3 = st.columns(3)
         with col1:
             st.markdown("<div class='section-title'>Temperature Distribution</div>", unsafe_allow_html=True)
-            # הגדלנו את height כדי לתת לגרף יותר מקום בעמודה
             fig = sns.displot(x='temp', data=df, kde=True, color="#FF7043", height=4, aspect=1.2)
             st.pyplot(fig.figure)
             plt.close(fig.figure)
 
         with col2:
-            st.markdown("<div class='section-title'>Temp vs Humidity</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-title'>Temperature and Humidity Correlation</div>", unsafe_allow_html=True)
             fig2 = sns.lmplot(x="temp", y="humidity", data=df, height=4, aspect=1.2,
-                              line_kws={"color": "#42A5F5"})  # שיניתי צבע ל-line_kws
+                              line_kws={"color": "#42A5F5"})
             st.pyplot(fig2.figure)
             plt.close(fig2.figure)
 
         with col3:
-            st.markdown("<div class='section-title'>Hourly Temp</div>", unsafe_allow_html=True)
+            st.markdown("<div class='section-title'>Hourly Temperature – Average & Max</div>", unsafe_allow_html=True)
             fig3, ax3 = plt.subplots(figsize=(6, 4))
             sns.scatterplot(x="hour", y="temp", data=df, color="#FF7043", alpha=0.3, ax=ax3)
-            sns.lineplot(x="hour", y="temp", data=df, estimator='mean', color="black", ax=ax3)
-            sns.lineplot(x='hour', y='temp', data=df, estimator='max', color="blue", ax=ax3)
+            sns.lineplot(x="hour", y="temp", data=df, estimator='mean',label="Average", color="black", ax=ax3)
+            sns.lineplot(x='hour', y='temp', data=df, estimator='max', color="blue", label="Max",ax=ax3)
             ax3.set_xticks(range(0, 24, 2))
             ax3.set_xlabel("Hour")
             ax3.set_ylabel("Temp (°C)")
@@ -146,9 +165,8 @@ def make_table_of_weather(lon ,lat):
             plt.close(fig3)
 
         st.markdown("---")
-        st.markdown("<div class='section-title'>🌡️ Temperature & Humidity Over Time</div>",
+        st.markdown("<div class='section-title'>🌡️ Temperature & Humidity Over DateTime</div>",
                     unsafe_allow_html=True)
-
         fig4 = go.Figure()
         fig4.add_trace(go.Scatter(x=df.index, y=df["temp"], mode='lines', name='Temp (°C)', line=dict(color='#FF7043')))
         fig4.add_trace(
@@ -239,7 +257,7 @@ def make_data_set_for_features(lon,lat,currnt_temp):
     elif currnt_temp and currnt_temp <10:
         current_condition='Very Cold'
     condition_index = temp_conditions.index(current_condition)
-    st.info(f"🌤️ Today is {current_condition}")
+    st.info(f"🌤️ Today is {current_condition}, here is list with recommended spots based on today’s weather in your area.")
     df["category"] = df["category"].apply(lambda row: find_category(row, list(categories.keys())))
     df = df[df["category"].notnull()]
     df["category"] = df["category"].astype(str)
@@ -248,8 +266,7 @@ def make_data_set_for_features(lon,lat,currnt_temp):
     display_filtered_places(df)
 
 
-#lat = lon = currnt_temp = None
-#form_submitted = False
+
 
 with st.form("location_form"):
     city = st.text_input("City")
@@ -279,6 +296,7 @@ with st.form("location_form"):
                         st.session_state.weather_time = now
                         st.session_state.full_address = full_address
                         st.session_state.weather_ready = True
+                        st.session_state.city=city
 
 if st.session_state.get("weather_ready"):
     st.markdown(f"""
@@ -295,7 +313,7 @@ if st.session_state.get("weather_ready"):
 
 if st.session_state.get("weather_ready") and all([st.session_state.lat,st.session_state.lon,st.session_state.currnt_temp]):
     with st.form("recommend_form"):
-        make_table_of_weather(st.session_state.lon, st.session_state.lat)
-        click = st.form_submit_button("🌤️ Show recommended places based on current weather")
+        make_table_of_weather(st.session_state.lon, st.session_state.lat,st.session_state.city)
+        click = st.form_submit_button("🌤️ Where to go? Let the weather decide!")
         if click:
             make_data_set_for_features(st.session_state.lon, st.session_state.lat,st.session_state.currnt_temp)
