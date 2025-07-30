@@ -33,7 +33,7 @@ Designed for **clarity and responsiveness** with minimal UI elements.
 
 Used **API chaining** and **weather-based filtering** for personalized recommendations.
 
- **Ready to try it out? Click the link below and let the weather guide your day! 👉**  [link](https://yaelweisman-weather-main-klvytg.streamlit.app/)
+ **Ready to try it out? Click the link below and let the weather guide your day! 👉**  [link weather](https://yaelweisman-weather-main-klvytg.streamlit.app/)
 
 
 
