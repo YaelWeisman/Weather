@@ -287,13 +287,12 @@ with st.form("location_form"):
                         temp = current.get("temp_C", "N/A")
                         humidity = current.get("humidity", "N/A")
                         wind = current.get("windspeedKmph", "N/A")
-                        now = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
+                        #now = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
                         st.session_state.lat = lat
                         st.session_state.lon = lon
                         st.session_state.currnt_temp = temp
                         st.session_state.humidity = humidity
                         st.session_state.wind = wind
-                        st.session_state.weather_time = now
                         st.session_state.full_address = full_address
                         st.session_state.weather_ready = True
                         st.session_state.city=city
@@ -302,7 +301,7 @@ if st.session_state.get("weather_ready"):
     st.markdown(f"""
     <div style='text-align:center; font-size:16px;'>
         📌 <strong>Address:</strong> {st.session_state.full_address}<br>
-        🕒 <strong>As of:</strong> {st.session_state.weather_time}
+        🕒 <strong>As of:</strong> {dt.datetime.now().strftime("%A, %B,%d,%Y")}
     </div><hr>
     """, unsafe_allow_html=True)
 
