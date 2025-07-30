@@ -14,15 +14,15 @@ WeatherX is a web application that analyzes historical weather data, shows curre
 
 
  ## How it works:
-The user inputs a **city + country**
+1.The user inputs a **city + country**
 
-The app geocodes the location using **Geoapify**.
+2.The app geocodes the location using **Geoapify**.
 
-It fetches weather data and processes it using **pandas**.
+3.It fetches weather data and processes it using **pandas**.
 
-Charts are built using **Seaborn** and **Plotly**.
+4.Charts are built using **Seaborn** and **Plotly**.
 
-Based on current temp, it filters relevant places and displays them as cards
+5.Based on current temp, it filters relevant places and displays them as cards
 
 
 
@@ -33,7 +33,7 @@ Designed for **clarity and responsiveness** with minimal UI elements.
 
 Used **API chaining** and **weather-based filtering** for personalized recommendations.
 
-##[link](https://yaelweisman-weather-main-klvytg.streamlit.app/)
+## [link](https://yaelweisman-weather-main-klvytg.streamlit.app/)
 
 ךןדצך'lli
 
