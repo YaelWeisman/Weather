@@ -2,7 +2,7 @@
 
 WeatherX is a web application that analyzes historical weather data, shows current conditions, and recommends nearby places and activities that match the current weather.
 
- ##What it does
+ ## What it does
 - Analyzes the **last 30 days** of weather using the [Open-Meteo API](https://open-meteo.com/)
 - Displays **current weather**: temperature, humidity, wind – via [wttr.in](https://wttr.in).
 - Visualizes data:
@@ -13,7 +13,7 @@ WeatherX is a web application that analyzes historical weather data, shows curre
 - Integrates with  [Geoapify Places API](https://www.geoapify.com/places-api).
 
 
- ##How it works:
+ ## How it works:
 The user inputs a **city + country**
 
 The app geocodes the location using **Geoapify**.
@@ -26,7 +26,7 @@ Based on current temp, it filters relevant places and displays them as cards
 
 
 
-##Development Highlights:
+## Development Highlights:
 State management handled with **Streamlit logic** (no heavy backend).
 
 Designed for **clarity and responsiveness** with minimal UI elements.
