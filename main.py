@@ -248,7 +248,7 @@ def make_data_set_for_features(lon,lat,currnt_temp):
     display_filtered_places(df)
 
 
-lat = lon = currnt_temp = None
+#lat = lon = currnt_temp = None
 #form_submitted = False
 
 with st.form("location_form"):
@@ -256,7 +256,6 @@ with st.form("location_form"):
     country = st.text_input("Country", value="Israel")
     submitted = st.form_submit_button("Check Weather")
     if submitted and city and country:
-            #form_submitted = True
             full_address = f"{city}, {country}"
             loc_url = f"https://api.geoapify.com/v1/geocode/search?text={full_address}&lang=en&format=json&apiKey=2d6acf0f3338413992829d14fa69ffdf"
             res = req.get(loc_url, verify=False)
@@ -272,21 +271,27 @@ with st.form("location_form"):
                         humidity = current.get("humidity", "N/A")
                         wind = current.get("windspeedKmph", "N/A")
                         now = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
-                        st.markdown(f"""
-                        <div style='text-align:center; font-size:16px;'>
-                            📌 <strong>Address:</strong> {full_address}<br>
-                            🕒 <strong>As of:</strong> {now}
-                        </div><hr>
-                        """, unsafe_allow_html=True)
-                        col1, col2, col3 = st.columns(3)
-                        col1.markdown(f"""<div class='metric-container'><div class='metric-label'>🌡️ Temp</div><div class='metric-value'>{temp}°C</div></div>""", unsafe_allow_html=True)
-                        col2.markdown(f"""<div class='metric-container'><div class='metric-label'>💧 Humidity</div><div class='metric-value'>{humidity}%</div></div>""", unsafe_allow_html=True)
-                        col3.markdown(f"""<div class='metric-container'><div class='metric-label'>🌬️ Wind</div><div class='metric-value'>{wind} km/h</div></div>""", unsafe_allow_html=True)
                         st.session_state.lat = lat
                         st.session_state.lon = lon
                         st.session_state.currnt_temp = temp
+                        st.session_state.humidity = humidity
+                        st.session_state.wind = wind
+                        st.session_state.weather_time = now
+                        st.session_state.full_address = full_address
                         st.session_state.weather_ready = True
 
+if st.session_state.get("weather_ready"):
+    st.markdown(f"""
+    <div style='text-align:center; font-size:16px;'>
+        📌 <strong>Address:</strong> {st.session_state.full_address}<br>
+        🕒 <strong>As of:</strong> {st.session_state.weather_time}
+    </div><hr>
+    """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+    col1.markdown(f"""<div class='metric-container'><div class='metric-label'>🌡️ Temp</div><div class='metric-value'>{st.session_state.currnt_temp}°C</div></div>""", unsafe_allow_html=True)
+    col2.markdown(f"""<div class='metric-container'><div class='metric-label'>💧 Humidity</div><div class='metric-value'>{st.session_state.humidity}%</div></div>""", unsafe_allow_html=True)
+    col3.markdown(f"""<div class='metric-container'><div class='metric-label'>🌬️ Wind</div><div class='metric-value'>{st.session_state.wind} km/h</div></div>""", unsafe_allow_html=True)
 
 if st.session_state.get("weather_ready") and all([st.session_state.lat,st.session_state.lon,st.session_state.currnt_temp]):
     with st.form("recommend_form"):
