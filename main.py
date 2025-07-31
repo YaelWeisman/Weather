@@ -249,11 +249,11 @@ def make_data_set_for_features(lon,lat,currnt_temp):
     current_condition=None
     if currnt_temp >=32:
         current_condition='Very Hot'
-    elif currnt_temp and currnt_temp >=27 and currnt_temp <=31:
+    elif currnt_temp and currnt_temp >=27 and currnt_temp <32:
         current_condition='Hot'
-    elif currnt_temp and currnt_temp >=20 and currnt_temp <=26:
+    elif currnt_temp and currnt_temp >=20 and currnt_temp <27:
         current_condition='Pleasant'
-    elif currnt_temp and currnt_temp >=10 and currnt_temp <=19:
+    elif currnt_temp and currnt_temp >=10 and currnt_temp <20:
         current_condition='Cold'
     elif currnt_temp and currnt_temp <10:
         current_condition='Very Cold'
