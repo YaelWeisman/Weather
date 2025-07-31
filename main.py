@@ -7,6 +7,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
+from pandas import to_datetime
 
 st.markdown("""
 <style>
@@ -276,32 +277,46 @@ with st.form("location_form"):
             full_address = f"{city}, {country}"
             loc_url = f"https://api.geoapify.com/v1/geocode/search?text={full_address}&lang=en&format=json&apiKey=2d6acf0f3338413992829d14fa69ffdf"
             res = req.get(loc_url, verify=False)
-            if res.status_code == 200 and res.json().get("results"):
-                result = res.json()["results"][0]
-                lat, lon = result.get("lat"), result.get("lon")
-                if lat and lon:
-                    weather_url = f"http://wttr.in/{lat},{lon}?format=j1"
-                    weather_res = req.get(weather_url, verify=False)
-                    if weather_res.status_code ==200:
-                        current = weather_res.json().get("current_condition", [{}])[0]
-                        temp = current.get("temp_C", "N/A")
-                        humidity = current.get("humidity", "N/A")
-                        wind = current.get("windspeedKmph", "N/A")
-                        #now = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
-                        st.session_state.lat = lat
-                        st.session_state.lon = lon
-                        st.session_state.currnt_temp = temp
-                        st.session_state.humidity = humidity
-                        st.session_state.wind = wind
-                        st.session_state.full_address = full_address
-                        st.session_state.weather_ready = True
-                        st.session_state.city=city
+            if res.status_code == 200:
+                loc_data = res.json()
+                if loc_data.get("results"):
+                    lat = loc_data.get("results",[])[0].get("lat")
+                    lon = loc_data.get("results",[])[0].get("lon")
+                    if lat and lon:
+                        location_query = f"{lat},{lon}"
+                        #key="d1f0fb7ba0ebd257d456d6da4dd1336c"
+                        weather_url = f"https://api.openweathermap.org/data/2.5/weather?lat={lat}&lon={lon}&appid=d1f0fb7ba0ebd257d456d6da4dd1336c"
+                        weather_res = req.get(weather_url, verify=False)
+                        if weather_res.status_code ==200:
+                            weather_res = weather_res.json()
+                            current = weather_res.get("main", {})
+                            temp = current.get("temp", "N/A")
+                            if temp:
+                                temp = round(float(temp) - 273.15, 1)
+                            humidity = current.get("humidity", "N/A")
+                            wind = weather_res.get("wind", {}).get("speed", "N/A")
+                            time_zone_seconds=weather_res.get("timezone","N/A")
+                            dt_timestamp=weather_res.get("dt", "N/A")
+                            if dt_timestamp and time_zone_seconds:
+                                utc_datetime = dt.datetime.fromtimestamp(dt_timestamp, tz=dt.timezone.utc)
+                                time_offset = dt.timedelta(seconds=time_zone_seconds)
+                                local_datetime = utc_datetime + time_offset
+                                local_time_display = local_datetime.strftime("%Y-%m-%d %H:%M:%S")
+                            st.session_state.lat = lat
+                            st.session_state.lon = lon
+                            st.session_state.currnt_temp = temp
+                            st.session_state.humidity = humidity
+                            st.session_state.wind = wind
+                            st.session_state.full_address = full_address
+                            st.session_state.weather_ready = True
+                            st.session_state.city=city
+                            st.session_state.now=local_time_display
 
-if st.session_state.get("weather_ready"):
+if st.session_state.get("weather_ready") :
     st.markdown(f"""
     <div style='text-align:center; font-size:16px;'>
         📌 <strong>Address:</strong> {st.session_state.full_address}<br>
-        🕒 <strong>As of:</strong> {dt.datetime.now().strftime("%A, %B,%d,%Y")}
+        🕒 <strong>As of:</strong> {st.session_state.now}<br>
     </div><hr>
     """, unsafe_allow_html=True)
 
