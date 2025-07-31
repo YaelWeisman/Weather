@@ -4,7 +4,7 @@ WeatherX is a web application that analyzes historical weather data, shows curre
 
  ## What it does
 - Analyzes the **last 30 days** of weather using the [Open-Meteo API](https://open-meteo.com/)
-- Displays **current weather**: temperature, humidity, wind – via [wttr.in](https://wttr.in).
+- Displays **current weather**: temperature, humidity, wind – via [WeatherAPI](https://www.weatherapi.com/).
 - Visualizes data:
 -Temperature distribution
 -Temp ↔ Humidity correlation
@@ -33,7 +33,7 @@ Designed for **clarity and responsiveness** with minimal UI elements.
 
 Used **API chaining** and **weather-based filtering** for personalized recommendations.
 
- **Ready to try it out? Click the link below and let the weather guide your day! 👉**  [link weather](https://yaelweisman-weather-main-klvytg.streamlit.app/)
+ **Ready to try it out? Click the link below and let the weather guide your day! 👉**  [link WeatherX](https://yaelweisman-weather-main-klvytg.streamlit.app/)
 
 
 
