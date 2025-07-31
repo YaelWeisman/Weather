@@ -220,9 +220,13 @@ def make_data_set_for_features(lon,lat,currnt_temp):
                     raw.get("name") or
                     raw.get("brand")
         )
+        if not name:
+            continue
         address=f"{properties.get("street",'')} , {properties.get("housenumber",'')}"
         if not address:
             address=f"{properties.get('address_line1','')} "
+        if not address:
+            continue
         city=properties.get("city") or properties.get("address_line2")
         data.append({
                 "name":name,
@@ -235,8 +239,18 @@ def make_data_set_for_features(lon,lat,currnt_temp):
                "longitude":geometry.get("coordinates", [None, None])[0],
         })
     df = pd.DataFrame(data)
-    df=df[df.name.notnull()]
-    df=df[df.address.notnull()]
+    if df.empty:
+        st.warning("😕 No valid data was found.")
+        return
+    if "name" in df.columns:
+        df = df[df["name"].notnull()]
+    else:
+        st.warning("⚠️ No 'name' field found in the data.")
+
+    if "address" in df.columns:
+        df = df[df["address"].notnull()]
+    else:
+        st.warning("⚠️ No 'address' field found in the data.")
     temp_conditions=['Very Hot','Hot','Pleasant','Cold','Very Cold']
     categories={'activity':[1,2],
                        'commercial.shopping_mall':[0,1,2,3,4],
