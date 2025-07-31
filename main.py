@@ -185,7 +185,7 @@ def make_table_of_weather(lon ,lat,city):
         )
         st.plotly_chart(fig4, use_container_width=True)  #
 
-def make_data_set_for_features(lon,lat,currnt_temp):
+def make_data_set_for_features(lon,lat,currnt_temp,condition):
     currnt_temp=float(currnt_temp)
     url = (
         f"https://api.geoapify.com/v2/places?"
@@ -244,24 +244,23 @@ def make_data_set_for_features(lon,lat,currnt_temp):
         return
     if "name" in df.columns:
         df = df[df["name"].notnull()]
-    else:
-        st.warning("⚠️ No 'name' field found in the data.")
-
     if "address" in df.columns:
         df = df[df["address"].notnull()]
-    else:
-        st.warning("⚠️ No 'address' field found in the data.")
-    temp_conditions=['Very Hot','Hot','Pleasant','Cold','Very Cold']
+    temp_conditions=['Very Hot','Hot','Pleasant','Cold','Very Cold','rain','snow']
     categories={'activity':[1,2],
-                       'commercial.shopping_mall':[0,1,2,3,4],
-                       'catering.restaurant':[0,1,2,3,4],
+                       'commercial.shopping_mall':[0,1,2,3,4,5,6],
+                       'catering.restaurant':[0,1,2,3,4,5,6],
                        'entertainment':[0,1,2,3,4],
                        'sport':[1,2,3],
                        'ski':[4],
                        'activity.hiking':[1,2],
                        "entertainment.theme_park":[1,2,3]}
     current_condition=None
-    if currnt_temp >=32:
+    if condition in ['light rain', 'moderate rain', 'heavy intensity rain', 'very heavy rain', 'extreme rain', 'freezing rain', 'light intensity shower rain', 'shower rain', 'heavy intensity shower rain', 'ragged shower rain', 'thunderstorm with light rain', 'thunderstorm with rain', 'thunderstorm with heavy rain']:
+        current_condition='rain'
+    elif condition in ['light snow', 'snow', 'heavy snow', 'sleet', 'light shower sleet', 'shower sleet', 'light rain and snow', 'rain and snow', 'light shower snow', 'shower snow', 'heavy shower snow']:
+        current_condition='snow'
+    elif currnt_temp >=32:
         current_condition='Very Hot'
     elif currnt_temp and currnt_temp >=27 and currnt_temp <32:
         current_condition='Hot'
@@ -271,17 +270,15 @@ def make_data_set_for_features(lon,lat,currnt_temp):
         current_condition='Cold'
     elif currnt_temp and currnt_temp <10:
         current_condition='Very Cold'
-    condition_index = temp_conditions.index(current_condition)
-    st.info(f"🌤️ Today is {current_condition}, here is list with recommended spots based on today’s weather in your area.")
-    df["category"] = df["category"].apply(lambda row: find_category(row, list(categories.keys())))
-    df = df[df["category"].notnull()]
-    df["category"] = df["category"].astype(str)
-    df["category"] = df["category"].str.strip()
-    df = df[df["category"].apply(lambda c: condition_index in categories.get(c, []))]
-    display_filtered_places(df)
-
-
-
+    if current_condition:
+        condition_index = temp_conditions.index(current_condition)
+        st.info(f"🌤️ Today is {current_condition}, here is list with recommended spots based on today’s weather in your area.")
+        df["category"] = df["category"].apply(lambda row: find_category(row, list(categories.keys())))
+        df = df[df["category"].notnull()]
+        df["category"] = df["category"].astype(str)
+        df["category"] = df["category"].str.strip()
+        df = df[df["category"].apply(lambda c: condition_index in categories.get(c, []))]
+        display_filtered_places(df)
 
 with st.form("location_form"):
     city = st.text_input("City")
@@ -309,6 +306,7 @@ with st.form("location_form"):
                                 temp = round(float(temp) - 273.15, 1)
                             humidity = current.get("humidity", "N/A")
                             wind = weather_res.get("wind", {}).get("speed", "N/A")
+                            condition_text = weather_res.get("weather", [{}])[0].get("description", "").lower()
                             time_zone_seconds=weather_res.get("timezone","N/A")
                             dt_timestamp=weather_res.get("dt", "N/A")
                             if dt_timestamp and time_zone_seconds:
@@ -325,6 +323,7 @@ with st.form("location_form"):
                             st.session_state.weather_ready = True
                             st.session_state.city=city
                             st.session_state.now=local_time_display
+                            st.session_state.current_condition=condition_text
 
 if st.session_state.get("weather_ready") :
     st.markdown(f"""
@@ -334,14 +333,14 @@ if st.session_state.get("weather_ready") :
     </div><hr>
     """, unsafe_allow_html=True)
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3,col4 = st.columns(4)
     col1.markdown(f"""<div class='metric-container'><div class='metric-label'>🌡️ Temp</div><div class='metric-value'>{st.session_state.currnt_temp}°C</div></div>""", unsafe_allow_html=True)
     col2.markdown(f"""<div class='metric-container'><div class='metric-label'>💧 Humidity</div><div class='metric-value'>{st.session_state.humidity}%</div></div>""", unsafe_allow_html=True)
     col3.markdown(f"""<div class='metric-container'><div class='metric-label'>🌬️ Wind</div><div class='metric-value'>{st.session_state.wind} km/h</div></div>""", unsafe_allow_html=True)
-
+    col4.markdown(f"""<div class='metric-container'><div class='metric-label'> Condition</div><div class='metric-value' style="font-size: medium;">{st.session_state.current_condition}</div></div>""",unsafe_allow_html=True)
 if st.session_state.get("weather_ready") and all([st.session_state.lat,st.session_state.lon,st.session_state.currnt_temp]):
     with st.form("recommend_form"):
         make_table_of_weather(st.session_state.lon, st.session_state.lat,st.session_state.city)
         click = st.form_submit_button("🌤️ Where to go? Let the weather decide!")
         if click:
-            make_data_set_for_features(st.session_state.lon, st.session_state.lat,st.session_state.currnt_temp)
+            make_data_set_for_features(st.session_state.lon, st.session_state.lat,st.session_state.currnt_temp, st.session_state.current_condition)
